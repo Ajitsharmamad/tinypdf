@@ -1,32 +1,18 @@
-<!--
-Multi-Tool PDF One-Page (Light + SEO friendly)
-Files: single index.html (inline CSS + JS)
-Features included:
- - PDF Compressor (client-side using PDFLib)
- - PDF Merge (merge multiple PDFs)
- - PDF Split (split into separate page PDFs)
- - Simple UI, share buttons, AdSense placeholders, FAQ schema
- - Lightweight: no backend, deployable on GitHub Pages / Netlify
-
-To deploy: create a new GitHub repo, add this index.html to root, enable GitHub Pages.
--->
-
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>TinyPDF Tools — Compress · Merge · Split (Free, Fast)</title>
-  <meta name="description" content="TinyPDF Tools: free online PDF compressor, merge, and split — all client-side. No upload to server. Fast, private, and lightweight. Compress PDFs for WhatsApp, merge files, or split pages." />
- 
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TinyPDF Tools — Compress · Merge · Split · Convert (Free, Fast)</title>
+  <meta name="description" content="TinyPDF Tools: free online PDF compressor, merge, split, convert and more — all client-side. No upload to server. Fast, private, and lightweight." />
 
-  <!-- SEO canonical + robots -->
+  <!-- canonical: update if you move the repo or domain -->
   <link rel="canonical" href="https://ajitsharmamad.github.io/tinypdf/">
   <meta name="robots" content="index,follow">
 
   <!-- OpenGraph -->
-  <meta property="og:title" content="TinyPDF Tools — Compress · Merge · Split">
-  <meta property="og:description" content="Free client-side PDF tools: compress PDFs, merge files, and split pages. Fast and private — works in the browser."/>
+  <meta property="og:title" content="TinyPDF Tools — Compress · Merge · Split · Convert">
+  <meta property="og:description" content="Free client-side PDF tools: compress, merge, split, convert and more. Works in the browser — private and fast."/>
   <meta property="og:type" content="website">
 
   <!-- Minimal inline CSS for single-file ease -->
@@ -51,22 +37,24 @@ To deploy: create a new GitHub repo, add this index.html to root, enable GitHub 
     footer{margin:22px 0;text-align:center;color:var(--muted);font-size:13px}
     .status{padding:10px;border-radius:8px;background:var(--glass);color:var(--muted);font-size:13px}
     .download-list a{display:block;margin:6px 0;color:#cfe9ff}
-    .ads-placeholder{background:linear-gradient(90deg,#071829,#092233);padding:12px;border-radius:8px;text-align:center;color:var(--muted);font-size:13px}
-    /* SEO content area */
     .seo{padding:12px;color:var(--muted);line-height:1.45;font-size:14px}
     .faq{margin-top:8px}
+    pre.small{white-space:pre-wrap}
   </style>
 
-  <!-- Libraries: pdf-lib and jszip (only for zip if needed later) -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.0/dist/jszip.min.js"></script>
+  <!-- pdf.js and worker will be loaded near the end -->
+  <!-- SheetJS for CSV -> Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>
     <div class="wrap">
       <div class="card">
         <h1>TinyPDF Tools</h1>
-        <p class="lead">Compress · Merge · Split — all done in your browser. No upload to servers, private and fast. Perfect for WhatsApp-sized PDFs.</p>
+        <p class="lead">Compress · Merge · Split · Convert — all done in your browser. No uploads. Private, fast, and free.</p>
 
         <div class="grid">
           <!-- COMPRESS -->
@@ -114,20 +102,85 @@ To deploy: create a new GitHub repo, add this index.html to root, enable GitHub 
             <div class="download-list" id="splitDownloads"></div>
           </div>
 
-          <!-- Placeholder for future tools -->
-          <div class="card">
-            <h3>More Tools</h3>
-            <p class="small">PDF → JPG, JPG → PDF, Merge images, etc. Coming soon. Share to get priority!</p>
-            <div style="height:10px"></div>
+          <!-- PDF -> JPG -->
+          <div class="card" id="pdf2jpgCard">
+            <h3>PDF → JPG</h3>
+            <p class="small">Convert PDF pages to JPG images (one link per page).</p>
+            <label for="pdf2jpgFile">Select PDF</label>
+            <input type="file" id="pdf2jpgFile" accept="application/pdf">
+            <div style="height:8px"></div>
             <div class="actions">
-              <a class="fake-link" id="whatsappShare">Share on WhatsApp</a>
-              <a class="fake-link" id="tweetShare">Share on Twitter</a>
+              <button id="pdf2jpgBtn">Convert</button>
             </div>
+            <div style="height:10px"></div>
+            <div id="pdf2jpgStatus" class="status">Ready</div>
+            <div class="download-list" id="pdf2jpgDownloads"></div>
+          </div>
+
+          <!-- JPG -> PDF -->
+          <div class="card" id="jpg2pdfCard">
+            <h3>JPG → PDF</h3>
+            <p class="small">Select images and combine into a single PDF.</p>
+            <label for="jpg2pdfFiles">Select Images (PNG/JPG)</label>
+            <input type="file" id="jpg2pdfFiles" accept="image/*" multiple>
+            <div style="height:8px"></div>
+            <div class="actions">
+              <button id="jpg2pdfBtn">Create PDF</button>
+              <a id="jpg2pdfDL" style="display:none; padding:10px 12px; background:var(--accent); color:white; border-radius:8px; text-decoration:none; display:block; text-align:center;">Download</a>
+            </div>
+            <div style="height:10px"></div>
+            <div id="jpg2pdfStatus" class="status">Ready</div>
+          </div>
+
+          <!-- Rotate PDF -->
+          <div class="card" id="rotateCard">
+            <h3>Rotate PDF</h3>
+            <p class="small">Rotate all pages: Left, Right, or 180°.</p>
+            <label for="rotateFile">Select PDF</label>
+            <input type="file" id="rotateFile" accept="application/pdf">
+            <div style="height:8px"></div>
+            <div class="actions">
+              <button data-rot="90" class="rotateBtn">Rotate Right</button>
+              <button data-rot="-90" class="rotateBtn">Rotate Left</button>
+              <button data-rot="180" class="rotateBtn">Rotate 180°</button>
+            </div>
+            <div style="height:10px"></div>
+            <div id="rotateStatus" class="status">Ready</div>
+            <a id="rotateDL" style="display:none; padding:10px 12px; background:var(--accent); color:white; border-radius:8px; text-decoration:none; display:block; text-align:center;">Download</a>
+          </div>
+
+          <!-- PDF -> Text -->
+          <div class="card" id="pdfTextCard">
+            <h3>PDF → Text</h3>
+            <p class="small">Extract text from PDF pages (basic extraction).</p>
+            <label for="pdfTextFile">Select PDF</label>
+            <input type="file" id="pdfTextFile" accept="application/pdf">
+            <div style="height:8px"></div>
+            <div class="actions">
+              <button id="pdfTextBtn">Extract</button>
+            </div>
+            <div style="height:10px"></div>
+            <div id="pdfTextStatus" class="status">Ready</div>
+            <pre id="pdfTextOutput" class="small" style="text-align:left;max-height:240px;overflow:auto;margin-top:8px;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px"></pre>
+          </div>
+
+          <!-- CSV -> Excel -->
+          <div class="card" id="csv2excelCard">
+            <h3>CSV → Excel (.xlsx)</h3>
+            <p class="small">Upload a CSV and download an Excel file.</p>
+            <label for="csv2excelFile">Select CSV</label>
+            <input type="file" id="csv2excelFile" accept=".csv,text/csv">
+            <div style="height:8px"></div>
+            <div class="actions">
+              <button id="csv2excelBtn">Convert</button>
+              <a id="csv2excelDL" style="display:none; padding:10px 12px; background:var(--accent); color:white; border-radius:8px; text-decoration:none; display:block; text-align:center;">Download</a>
+            </div>
+            <div style="height:10px"></div>
+            <div id="csv2excelStatus" class="status">Ready</div>
           </div>
         </div>
 
         <div style="height:12px"></div>
-        <div class="ads-placeholder">Ad placeholder — place AdSense / Ezoic here (responsive banner)</div>
       </div>
 
       <!-- SEO content block: short description + FAQ -->
@@ -163,9 +216,10 @@ To deploy: create a new GitHub repo, add this index.html to root, enable GitHub 
   }
   </script>
 
-  <!-- Main JS: Compressor, Merge, Split (client-side using PDFLib) -->
+  <!-- Main JS: compressor, merge, split, etc. -->
   <script>
   (function(){
+    // Elements
     const compressFile = document.getElementById('compressFile');
     const compressBtn = document.getElementById('compressBtn');
     const compressStatus = document.getElementById('compressStatus');
@@ -181,102 +235,266 @@ To deploy: create a new GitHub repo, add this index.html to root, enable GitHub 
     const splitStatus = document.getElementById('splitStatus');
     const splitDownloads = document.getElementById('splitDownloads');
 
-    // Utility: show status
-    function setStatus(el,text){el.innerText=text}
+    // Utility
+    function setStatus(el, txt){ if(el) el.innerText = txt; }
 
-    // Robust download helper: tries immediate click and falls back to opening in new tab or IE blob save
-    // NOTE: Removed auto-download helper to rely on explicit Download link click by the user.
-
-    // Compress: use pdf-lib's save options (client-side compression)
+    // COMPRESS
     compressBtn.addEventListener('click', async ()=>{
-      if(!compressFile.files.length){alert('Select a PDF');return}
+      if(!compressFile.files.length){ alert('Select a PDF'); return; }
       try{
-        setStatus(compressStatus,'Reading file...')
+        setStatus(compressStatus, 'Reading file...');
         const f = compressFile.files[0];
         const ab = await f.arrayBuffer();
-        setStatus(compressStatus,'Processing PDF...')
+        setStatus(compressStatus, 'Processing PDF...');
         const pdfDoc = await PDFLib.PDFDocument.load(ab);
-        // Optionally remove embedded fonts / images: pdf-lib doesn't have built-in image recompression.
-        // Save with object streams and compression flag
-        const compressed = await pdfDoc.save({useObjectStreams:true,compress:true});
-        const blob = new Blob([compressed],{type:'application/pdf'});
+        const compressed = await pdfDoc.save({useObjectStreams:true, compress:true});
+        const blob = new Blob([compressed], {type:'application/pdf'});
         const url = URL.createObjectURL(blob);
-        compressDL.href = url; compressDL.download = (f.name||'compressed.pdf').replace(/\.pdf$/i,'') + '-compressed.pdf';
-        compressDL.style.display='inline-block';
-        // Auto-download (attempt immediate click)
-        
-        setStatus(compressStatus,`Done — compressed size: ${(blob.size/1024).toFixed(1)} KB`);
-      }catch(e){console.error(e);setStatus(compressStatus,'Compression failed');alert('Error: '+(e.message||e))}
+        compressDL.href = url;
+        compressDL.download = (f.name||'compressed.pdf').replace(/\.pdf$/i,'') + '-compressed.pdf';
+        compressDL.style.display = 'inline-block';
+        setStatus(compressStatus, `Done — ${(blob.size/1024).toFixed(1)} KB`);
+      }catch(e){ console.error(e); setStatus(compressStatus, 'Compression failed'); alert('Error: '+(e.message||e)); }
     });
 
-    // Merge: combine many PDFs into one
+    // MERGE
     mergeBtn.addEventListener('click', async ()=>{
-      if(!mergeFiles.files.length){alert('Select at least 2 PDFs');return}
+      if(!mergeFiles.files.length || mergeFiles.files.length < 1){ alert('Select at least one PDF'); return; }
       try{
-        setStatus(mergeStatus,'Loading files...')
+        setStatus(mergeStatus, 'Loading files...');
         const outPdf = await PDFLib.PDFDocument.create();
         for(const file of mergeFiles.files){
           const ab = await file.arrayBuffer();
           const pdf = await PDFLib.PDFDocument.load(ab);
           const copied = await outPdf.copyPages(pdf, pdf.getPageIndices());
-          copied.forEach(p=>outPdf.addPage(p));
+          copied.forEach(p => outPdf.addPage(p));
         }
-        setStatus(mergeStatus,'Saving merged PDF...')
-        const merged = await outPdf.save({useObjectStreams:true,compress:true});
-        const blob = new Blob([merged],{type:'application/pdf'});
+        setStatus(mergeStatus, 'Saving merged PDF...');
+        const merged = await outPdf.save({useObjectStreams:true, compress:true});
+        const blob = new Blob([merged], {type:'application/pdf'});
         const url = URL.createObjectURL(blob);
-        mergeDL.href = url; mergeDL.download = 'merged.pdf'; mergeDL.style.display='inline-block';
-        // Auto-download (attempt immediate click)
-        
-        setStatus(mergeStatus,`Done — merged size: ${(blob.size/1024).toFixed(1)} KB`);
-      }catch(e){console.error(e);setStatus(mergeStatus,'Merge failed');alert('Error: '+(e.message||e))}
+        mergeDL.href = url;
+        mergeDL.download = 'merged.pdf';
+        mergeDL.style.display = 'inline-block';
+        setStatus(mergeStatus, `Done — ${(blob.size/1024).toFixed(1)} KB`);
+      }catch(e){ console.error(e); setStatus(mergeStatus, 'Merge failed'); alert('Error: '+(e.message||e)); }
     });
 
-    // Split: split into single-page PDFs and show download links
+    // SPLIT
     splitBtn.addEventListener('click', async ()=>{
-      if(!splitFile.files.length){alert('Select a PDF');return}
+      if(!splitFile.files.length){ alert('Select a PDF'); return; }
       try{
-        setStatus(splitStatus,'Reading file...')
-        splitDownloads.innerHTML='';
+        setStatus(splitStatus, 'Reading file...');
+        splitDownloads.innerHTML = '';
         const f = splitFile.files[0];
         const ab = await f.arrayBuffer();
         const pdf = await PDFLib.PDFDocument.load(ab);
         const total = pdf.getPageCount();
-        setStatus(splitStatus,`Splitting into ${total} pages... (creating blobs)`)
+        setStatus(splitStatus, `Splitting into ${total} pages...`);
         for(let i=0;i<total;i++){
           const newDoc = await PDFLib.PDFDocument.create();
-          const [copied] = await newDoc.copyPages(pdf,[i]);
+          const [copied] = await newDoc.copyPages(pdf, [i]);
           newDoc.addPage(copied);
-          const single = await newDoc.save({useObjectStreams:true,compress:true});
-          const blob = new Blob([single],{type:'application/pdf'});
+          const single = await newDoc.save({useObjectStreams:true, compress:true});
+          const blob = new Blob([single], {type:'application/pdf'});
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = url; a.download = (f.name||'split') .replace(/\.pdf$/i,'') + `-page-${i+1}.pdf`;
+          a.href = url;
+          a.download = (f.name||'split').replace(/\.pdf$/i,'') + `-page-${i+1}.pdf`;
           a.innerText = `Download page ${i+1} (${(blob.size/1024).toFixed(1)} KB)`;
-          a.style.display='block'; a.className='small';
+          a.style.display='block';
+          a.className='small';
           splitDownloads.appendChild(a);
         }
-        setStatus(splitStatus,'Done — download the pages below');
-      }catch(e){console.error(e);setStatus(splitStatus,'Split failed');alert('Error: '+(e.message||e))}
+        setStatus(splitStatus, 'Done — download the pages below');
+      }catch(e){ console.error(e); setStatus(splitStatus, 'Split failed'); alert('Error: '+(e.message||e)); }
     });
 
-    // Share buttons
-    document.getElementById('whatsappShare').addEventListener('click', ()=>{
-      const url = encodeURIComponent(location.href);
-      window.open(`https://api.whatsapp.com/send?text=Check+this+TinyPDF+tool:+${url}`,'_blank')
-    })
-    document.getElementById('tweetShare').addEventListener('click', ()=>{
-      const url = encodeURIComponent(location.href);
-      window.open(`https://twitter.com/intent/tweet?text=TinyPDF+Tools+-+Compress+Merge+Split&url=${url}`,'_blank')
-    })
+    // Share
+    const whatsappShare = document.getElementById('whatsappShare');
+    const tweetShare = document.getElementById('tweetShare');
+    if(whatsappShare) whatsappShare.addEventListener('click', ()=>{ const url = encodeURIComponent(location.href); window.open(`https://api.whatsapp.com/send?text=Check+this+TinyPDF+tool:+${url}`, '_blank'); });
+    if(tweetShare) tweetShare.addEventListener('click', ()=>{ const url = encodeURIComponent(location.href); window.open(`https://twitter.com/intent/tweet?text=TinyPDF+Tools&url=${url}`, '_blank'); });
 
-    // Quick helper: keyboard drag/drop
-    ['compressCard','mergeCard','splitCard'].forEach(id=>{
+    // Dragover safe areas
+    ['compressCard','mergeCard','splitCard','pdf2jpgCard','jpg2pdfCard','rotateCard','pdfTextCard','csv2excelCard'].forEach(id=>{
       const el = document.getElementById(id);
-      el.addEventListener('dragover',e=>e.preventDefault());
+      if(el) el.addEventListener('dragover', e => e.preventDefault());
     });
-
   })();
+  </script>
+
+  <!-- PDF.js + Additional tool scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    // Configure pdf.js worker
+    if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    // PDF -> JPG (render pages to images)
+    (function(){
+      const pdf2jpgFile = document.getElementById('pdf2jpgFile');
+      const pdf2jpgBtn = document.getElementById('pdf2jpgBtn');
+      const pdf2jpgStatus = document.getElementById('pdf2jpgStatus');
+      const pdf2jpgDownloads = document.getElementById('pdf2jpgDownloads');
+
+      pdf2jpgBtn.addEventListener('click', async ()=>{
+        if(!pdf2jpgFile.files.length){ alert('Select a PDF'); return; }
+        try{
+          pdf2jpgStatus.innerText = 'Loading PDF...';
+          pdf2jpgDownloads.innerHTML = '';
+          const file = pdf2jpgFile.files[0];
+          const arrayBuffer = await file.arrayBuffer();
+          const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+          const pdf = await loadingTask.promise;
+          for(let p=1;p<=pdf.numPages;p++){
+            pdf2jpgStatus.innerText = `Rendering page ${p} of ${pdf.numPages}...`;
+            const page = await pdf.getPage(p);
+            const viewport = page.getViewport({scale:1.5});
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext('2d');
+            await page.render({canvasContext: ctx, viewport: viewport}).promise;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = (file.name.replace(/\.pdf$/i,'') + `-page-${p}.jpg`);
+            a.innerText = `Download page ${p} (JPG)`;
+            a.style.display = 'block';
+            a.className='small';
+            pdf2jpgDownloads.appendChild(a);
+          }
+          pdf2jpgStatus.innerText = 'Done — download images below';
+        }catch(e){ console.error(e); pdf2jpgStatus.innerText='Failed'; alert(e.message||e); }
+      });
+    })();
+
+    // JPG -> PDF (images to PDF using pdf-lib)
+    (function(){
+      const jpg2pdfFiles = document.getElementById('jpg2pdfFiles');
+      const jpg2pdfBtn = document.getElementById('jpg2pdfBtn');
+      const jpg2pdfStatus = document.getElementById('jpg2pdfStatus');
+      const jpg2pdfDL = document.getElementById('jpg2pdfDL');
+
+      jpg2pdfBtn.addEventListener('click', async ()=>{
+        if(!jpg2pdfFiles.files.length){ alert('Select at least one image'); return; }
+        try{
+          jpg2pdfStatus.innerText = 'Processing images...';
+          const outPdf = await PDFLib.PDFDocument.create();
+          for(const f of jpg2pdfFiles.files){
+            const ab = await f.arrayBuffer();
+            // Try embed JPG first, if fails try PNG
+            let img;
+            try{ img = await outPdf.embedJpg(ab); }
+            catch(err){ img = await outPdf.embedPng(ab); }
+            const page = outPdf.addPage([img.width, img.height]);
+            page.drawImage(img, {x:0,y:0,width:img.width,height:img.height});
+          }
+          const pdfBytes = await outPdf.save({useObjectStreams:true, compress:true});
+          const blob = new Blob([pdfBytes], {type:'application/pdf'});
+          const url = URL.createObjectURL(blob);
+          jpg2pdfDL.href = url;
+          jpg2pdfDL.download = 'images-merged.pdf';
+          jpg2pdfDL.style.display = 'inline-block';
+          jpg2pdfStatus.innerText = `Done — ${(blob.size/1024).toFixed(1)} KB`;
+        }catch(e){ console.error(e); jpg2pdfStatus.innerText='Failed'; alert(e.message||e); }
+      });
+    })();
+
+    // Rotate PDF (all pages)
+    (function(){
+      const rotateFileInput = document.getElementById('rotateFile');
+      const rotateStatusEl = document.getElementById('rotateStatus');
+      const rotateDL = document.getElementById('rotateDL');
+      const rotateButtons = document.querySelectorAll('.rotateBtn');
+      rotateButtons.forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          if(!rotateFileInput.files.length){ alert('Select a PDF'); return; }
+          const rot = parseInt(btn.getAttribute('data-rot'), 10) || 0;
+          try{
+            rotateStatusEl.innerText = 'Processing...';
+            const f = rotateFileInput.files[0];
+            const ab = await f.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(ab);
+            const pages = pdf.getPageCount();
+            for(let i=0;i<pages;i++){
+              const page = pdf.getPage(i);
+              const prev = (page.getRotation && page.getRotation().angle) ? page.getRotation().angle : 0;
+              const newAngle = (prev + rot + 360) % 360;
+              page.setRotation(PDFLib.degrees(newAngle));
+            }
+            const out = await pdf.save({useObjectStreams:true, compress:true});
+            const blob = new Blob([out], {type:'application/pdf'});
+            const url = URL.createObjectURL(blob);
+            rotateDL.href = url;
+            rotateDL.download = (f.name||'rotated.pdf').replace(/\.pdf$/i,'') + '-rotated.pdf';
+            rotateDL.style.display = 'inline-block';
+            rotateStatusEl.innerText = `Done — ${(blob.size/1024).toFixed(1)} KB`;
+          }catch(e){ console.error(e); rotateStatusEl.innerText='Failed'; alert(e.message||e); }
+        });
+      });
+    })();
+
+    // PDF -> Text (basic extraction using pdf.js)
+    (function(){
+      const pdfTextFile = document.getElementById('pdfTextFile');
+      const pdfTextBtn = document.getElementById('pdfTextBtn');
+      const pdfTextStatus = document.getElementById('pdfTextStatus');
+      const pdfTextOutput = document.getElementById('pdfTextOutput');
+
+      pdfTextBtn.addEventListener('click', async ()=>{
+        if(!pdfTextFile.files.length){ alert('Select a PDF'); return; }
+        try{
+          pdfTextStatus.innerText = 'Loading PDF...';
+          pdfTextOutput.textContent = '';
+          const f = pdfTextFile.files[0];
+          const ab = await f.arrayBuffer();
+          const loadingTask = pdfjsLib.getDocument({data: ab});
+          const pdf = await loadingTask.promise;
+          for(let p=1;p<=pdf.numPages;p++){
+            pdfTextStatus.innerText = `Extracting page ${p} of ${pdf.numPages}...`;
+            const page = await pdf.getPage(p);
+            const txtContent = await page.getTextContent();
+            const strings = txtContent.items.map(i => i.str).join(' ');
+            pdfTextOutput.textContent += `\n\n--- Page ${p} ---\n` + strings;
+          }
+          pdfTextStatus.innerText = 'Done';
+        }catch(e){ console.error(e); pdfTextStatus.innerText='Failed'; alert(e.message||e); }
+      });
+    })();
+
+    // CSV -> Excel (SheetJS)
+    (function(){
+      const csv2excelFile = document.getElementById('csv2excelFile');
+      const csv2excelBtn = document.getElementById('csv2excelBtn');
+      const csv2excelDL = document.getElementById('csv2excelDL');
+      const csv2excelStatus = document.getElementById('csv2excelStatus');
+
+      csv2excelBtn.addEventListener('click', async ()=>{
+        if(!csv2excelFile.files.length){ alert('Select a CSV file'); return; }
+        try{
+          csv2excelStatus.innerText = 'Reading CSV...';
+          const f = csv2excelFile.files[0];
+          const text = await f.text();
+          csv2excelStatus.innerText = 'Converting...';
+          // Parse lines (basic robust split for quotes)
+          const rows = text.split(/\r?\n/).filter(r => r.trim().length > 0).map(line=>{
+            const cols = line.match(/(?:"(?:[^"]|"")*"|[^,])+/g) || [];
+            return cols.map(c => c.replace(/^\s*"|"\s*$/g,'').replace(/""/g,'"'));
+          });
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+          const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+          const blob = new Blob([wbout], {type:'application/octet-stream'});
+          const url = URL.createObjectURL(blob);
+          csv2excelDL.href = url;
+          csv2excelDL.download = (f.name||'file.csv').replace(/\.csv$/i,'') + '.xlsx';
+          csv2excelDL.style.display = 'inline-block';
+          csv2excelStatus.innerText = 'Done — click Download';
+        }catch(e){ console.error(e); csv2excelStatus.innerText = 'Failed'; alert(e.message||e); }
+      });
+    })();
   </script>
 </body>
 </html>
