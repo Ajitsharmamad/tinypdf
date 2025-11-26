@@ -3,8 +3,63 @@
 
   <url>
     <loc>https://ajitsharmamad.github.io/tinypdf/</loc>
+    <lastmod>2025-11-27</lastmod>
     <priority>1.00</priority>
-    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/pdf-compress.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/pdf-merge.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/pdf-split.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.75</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/pdf-to-jpg.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.75</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/jpg-to-pdf.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.75</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/rotate-pdf.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.70</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/pdf-to-text.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.70</priority>
+  </url>
+
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/csv-to-excel.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- OG image (so crawlers know it exists) -->
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/og-image.png</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.10</priority>
   </url>
 
 </urlset>
