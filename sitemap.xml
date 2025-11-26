@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
+  <!-- Main Page -->
   <url>
     <loc>https://ajitsharmamad.github.io/tinypdf/</loc>
     <lastmod>2025-11-27</lastmod>
     <priority>1.00</priority>
   </url>
 
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://ajitsharmamad.github.io/tinypdf/privacy-policy.html</loc>
+    <lastmod>2025-11-27</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Tool Pages -->
   <url>
     <loc>https://ajitsharmamad.github.io/tinypdf/pdf-compress.html</loc>
     <lastmod>2025-11-27</lastmod>
@@ -55,7 +64,7 @@
     <priority>0.70</priority>
   </url>
 
-  <!-- OG image (so crawlers know it exists) -->
+  <!-- OG Image -->
   <url>
     <loc>https://ajitsharmamad.github.io/tinypdf/og-image.png</loc>
     <lastmod>2025-11-27</lastmod>
